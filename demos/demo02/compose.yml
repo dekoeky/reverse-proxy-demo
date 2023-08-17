@@ -1,0 +1,39 @@
+
+# Traefik Web UI:
+# http://localhost:8080
+
+# HTTP Routers:
+# http://localhost:8080/dashboard/#/http/routers
+
+# WhoAmI Reachable at:
+# http://whoami.docker.localhost
+# http://localhost/whoami
+# http://localhost:8000
+
+services:
+
+  # http://localhost:80
+  proxy:
+    # The official v2 Traefik docker image
+    image: traefik:v2.10
+    restart: unless-stopped
+    # Enables the web UI and tells Traefik to listen to docker
+    command: --api.insecure=true --providers.docker --log.level=DEBUG
+    ports:
+      # The HTTP port
+      - 80:80
+      # The Web UI (enabled by --api.insecure=true)
+      - 8080:8080
+    volumes:
+      # So that Traefik can listen to the Docker events
+      - /var/run/docker.sock:/var/run/docker.sock
+
+  # http://localhost:80
+  whoami:
+    image: traefik/whoami
+    restart: unless-stopped
+    ports:
+      - 8000:80
+    labels:
+      - traefik.http.routers.whoami-rule-1.rule=Host(`whoami.docker.localhost`)
+      - traefik.http.routers.whoami-rule-2.rule=PathPrefix(`/whoami`)

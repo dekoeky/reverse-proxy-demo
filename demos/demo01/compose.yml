@@ -1,0 +1,9 @@
+
+services:
+
+  # http://localhost:80
+  whoami:
+    image: traefik/whoami
+    restart: unless-stopped
+    ports:
+      - 8000:80
