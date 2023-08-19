@@ -1,0 +1,81 @@
+
+# Traefik Web UI:
+# http://localhost:8080
+
+# HTTP Routers:
+# http://localhost:8080/dashboard/#/http/routers
+
+# WhoAmI Reachable at:
+# http://whoami.docker.localhost
+# http://localhost/whoami
+# http://localhost:???? Port picked randomly by docker
+
+services:
+
+  # http://localhost:80
+  proxy:
+    # The official v2 Traefik docker image
+    image: traefik:v2.10
+    restart: unless-stopped
+    # Enables the web UI and tells Traefik to listen to docker
+    command: --api.insecure=true --providers.docker --log.level=DEBUG
+    ports:
+      # The HTTP port
+      - 80:80
+      # The Web UI (enabled by --api.insecure=true)
+      - 8080:8080
+    volumes:
+      # So that Traefik can listen to the Docker events
+      - /var/run/docker.sock:/var/run/docker.sock
+
+
+  # # http://localhost:80
+  # timeapi:
+  #   image: dekoeky/timeapi
+  #   restart: unless-stopped
+  #   # deploy:
+  #   #   replicas: 3
+  #   ports:
+  #     - 80
+  #   labels:
+  #     # - traefik.http.routers.whoami-rule-1.rule=Host(`timeapi.localhost`)
+  #     # - traefik.http.routers.whoami-rule-2.rule=Host(`timeapi.docker.localhost`)
+  #     # - traefik.http.routers.whoami-rule-3.rule=PathPrefix(`/timeapi`)
+  #     # - traefik.http.middlewares.example.stripprefix.prefixes=/foobar     
+  #     - traefik.http.routers.timeapi-router.rule=PathPrefix(`/timeapi/`)
+  #     - traefik.http.routers.timeapi-router.service=timeapi
+  #     - traefik.http.services.timeapi-service.loadbalancer.server.port=80
+  #     - traefik.http.middlewares.timeapi-strip.stripprefix.prefixes=/timeapi
+  #     - traefik.http.middlewares.timeapi-strip.stripprefix.forceslash=false
+  #     - traefik.http.routers.timeapi-router.middlewares=timeapi-strip
+
+  # myservice:
+  #   image: dekoeky/timeapi:latest
+  #   ports: # no need to expose port, just to show that service listens on 80
+  #     - target: 80
+  #       published: 8000
+  #       mode: host
+  #   labels:
+  # # service myservice gets automatically assigned to router myproxy
+  #     - traefik.enable=true
+  #     - traefik.http.routers.myservice-router.rule=PathPrefix(`/myservice/`)
+  #     - traefik.http.routers.myservice-router.service=myservice-service
+  #     - traefik.http.services.myservice-service.loadbalancer.server.port=80
+  #     - traefik.http.middlewares.myservice-strip.stripprefix.prefixes=/myservice
+  #     - traefik.http.middlewares.myservice-strip.stripprefix.forceslash=false
+  #     - traefik.http.routers.myservice-router.middlewares=myservice-strip
+
+
+  api:
+    image: ghcr.io/dekoeky/timeapi
+    deploy:
+      replicas: 3
+    volumes:
+      - ./apsettings.Production.json:/app/appsettings.Production.json
+    environment:
+      Logging__LogLevel__Default: DEBUG
+      Logging__LogLevel__Microsoft__AspNetCore: DEBUG
+    labels:
+      - traefik.http.routers.api.rule=PathPrefix(`/api`)
+      - traefik.http.middlewares.strip-api.stripprefix.prefixes=/api
+      - traefik.http.routers.api.middlewares=strip-api@docker

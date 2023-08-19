@@ -1,0 +1,25 @@
+
+# Traefik Web UI:
+# http://localhost:8080
+
+# HTTP Routers:
+# http://localhost:8080/dashboard/#/http/routers
+
+# WhoAmI Reachable at:
+# http://whoami.docker.localhost
+# http://localhost/whoami
+# http://localhost:???? Port picked randomly by docker
+
+services:
+
+  proxy:
+    build: proxy
+    restart: unless-stopped
+    ports:
+      - 80:80
+
+  timeapi:
+    image: dekoeky/timeapi
+    restart: unless-stopped
+    deploy:
+      replicas: 3
